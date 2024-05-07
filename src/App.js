@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { db } from "./firebaseConnection";
-import { doc, setDoc, getDoc, addDoc, collection, getDocs } from 'firebase/firestore';
+import { doc, setDoc, getDoc, addDoc, collection, getDocs, updateDoc } from 'firebase/firestore';
 
 import './app.css';
 
 function App() {
   const [titulo, setTitulo] = useState('');
   const [autor, setAutor] = useState('');
+  
+  const [idPost, setIdPost] = useState('');
 
   const [posts, setPosts] = useState([]);
 
@@ -68,11 +70,37 @@ function App() {
       console.log("Deu algum erro: " + error);
     })
   }
+
+  async function editarPost() {
+    const docRef = doc(db, "posts", idPost)
+    await updateDoc(docRef, {
+      titulo: titulo,
+      autor: autor,
+    })
+    .then(() => {
+      console.log("Post atuaizado")
+      setIdPost('')
+      setTitulo('')
+      setAutor('')
+    })
+    .catch((error) => {
+      console.log("Erro ao atualizar o post: " + error)
+    })
+  }
+
   return (
     <div>
       <h1>ReactJS + Firebase :)</h1>
 
       <div className="container">
+
+        <label>ID do Post:</label>
+        <input
+          placeholder="Digite o ID do post"
+          value={idPost}
+          onChange={ (e) => setIdPost(e.target.value) }
+        /> <br />
+
         <label>Título:</label>
         <textarea
           type="text"
@@ -87,15 +115,18 @@ function App() {
           placeholder="Autor do post"
           value={autor}
           onChange={ (e) => setAutor(e.target.value) }
-        />
+        /><br />
 
-        <button onClick={handleAdd}>Cadastrar</button>
-        <button onClick={buscarPost}>Buscar Post</button>
+        <button onClick={handleAdd}>Cadastrar</button> <br />
+        <button onClick={buscarPost}>Buscar Post</button> <br />
+
+        <button onClick={editarPost}>Atualizar Post</button>
 
         <ul>
           {posts.map((post) => {
             return(
               <li key={post.id}>
+                <strong>ID: {post.id}</strong> <br />
                 <span>Título: {post.titulo}</span> <br />
                 <span>Autor: {post.autor}</span> <br /> <br />
               </li>
