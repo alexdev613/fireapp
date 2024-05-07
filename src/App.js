@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { db } from "./firebaseConnection";
-import { doc, setDoc, getDoc, addDoc, collection, getDocs, updateDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, addDoc, collection, getDocs, updateDoc, deleteDoc } from 'firebase/firestore';
 
 import './app.css';
 
 function App() {
   const [titulo, setTitulo] = useState('');
   const [autor, setAutor] = useState('');
-  
+
   const [idPost, setIdPost] = useState('');
 
   const [posts, setPosts] = useState([]);
@@ -88,6 +88,19 @@ function App() {
     })
   }
 
+  async function excluirPost(id) {
+    // alert("ID DO POST: " + id)
+    const docRef = doc(db, "posts", id)
+    await deleteDoc(docRef)
+    .then(() => {
+      alert("POST DELETADO COM SUCESSO!")
+      buscarPost();
+    })
+    .catch((error) => {
+      console.log("Erro ao deletar post" + error)
+    })
+  }
+
   return (
     <div>
       <h1>ReactJS + Firebase :)</h1>
@@ -128,7 +141,8 @@ function App() {
               <li key={post.id}>
                 <strong>ID: {post.id}</strong> <br />
                 <span>Título: {post.titulo}</span> <br />
-                <span>Autor: {post.autor}</span> <br /> <br />
+                <span>Autor: {post.autor}</span> <br />
+                <button onClick={ () => excluirPost(post.id) }>Excluir</button> <br /> <br />
               </li>
             )
           })}
