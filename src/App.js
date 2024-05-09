@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { db, auth } from "./firebaseConnection";
 import {
   doc,
-  setDoc,
-  getDoc,
+  // setDoc,
+  // getDoc,
   addDoc,
   collection,
   getDocs,
@@ -13,8 +13,10 @@ import {
 } from 'firebase/firestore';
 
 import {
-  createUserWithEmailAndPassword
-  
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
 } from "firebase/auth";
 
 import './app.css';
@@ -29,6 +31,9 @@ function App() {
 
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
+
+  const [user, setUser] = useState(false);
+  const [userDetail, setUserDetail] = useState({});
 
   useEffect(() => {
     async function loadPosts() {
@@ -50,6 +55,27 @@ function App() {
     loadPosts();
   }, [])
 
+  useEffect(() => {
+    async function checkLogin() {
+      onAuthStateChanged(auth, (user) => {
+        if(user) {
+          // se tem usuário logado ele entra aqui...
+          console.log(user);
+          setUser(true);
+          setUserDetail({
+            uid: user.uid,
+            email: user.email,
+          })
+        } else {
+          // não possui nenhum user logado...
+          setUser(false);
+          setUserDetail({})
+        }
+      })
+    }
+
+    checkLogin();
+  }, [])
   async function handleAdd(){
     // await setDoc(doc(db, "posts", "12345"), {
     //   titulo: titulo,
@@ -157,9 +183,44 @@ function App() {
     })
   }
 
+  async function logarUsuario() {
+    await signInWithEmailAndPassword(auth, email, senha)
+    .then((value) =>{
+      console.log("USER LOGADO COM SUCESSO!");
+      console.log(value.user);
+
+      setUserDetail({
+        uid: value.user.uid,
+        email: value.user.email,
+      })
+      setUser(true);
+
+      setEmail('');
+      setSenha('');
+    })
+    .catch((error) => {
+      console.log("ERRO AO FAZER O LOGIN" + error)
+    })
+  }
+
+  async function fazerLogout() {
+    await signOut(auth);
+    setUser(false);
+    setUserDetail({});
+  }
+
   return (
     <div>
       <h1>ReactJS + Firebase :)</h1>
+
+      { user && (
+        <div>
+          <strong>Seja ben-vindo(a) (Você está logado!)</strong> <br />
+          <span>ID: {userDetail.uid} - Email: {userDetail.email}</span> <br />
+          <button onClick={fazerLogout}>Sair da conta</button>
+          <br /> <br />
+        </div>
+      )}
 
       <div className="container">
         <h2>Usuários</h2>
@@ -177,7 +238,8 @@ function App() {
           onChange={(e) => setSenha(e.target.value)}
           placeholder="Informe sua senha"
         /> <br />
-        <button onClick={novoUsuario}>Novo Usuario</button>
+        <button onClick={novoUsuario}>Novo Usuario</button> <br />
+        <button onClick={logarUsuario}>Fazer login</button>
       </div>
 
       <br /> <br />
